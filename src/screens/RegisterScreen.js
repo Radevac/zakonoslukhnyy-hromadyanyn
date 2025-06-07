@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
-const LoginScreen = ({ navigation }) => {
-    const { login } = useAuth();
+const RegisterScreen = ({ navigation }) => {
+    const { register } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = async () => {
+    const handleRegister = async () => {
         try {
-            await login(username, password);
+            await register(username, password);
+            navigation.goBack();
         } catch (err) {
             Alert.alert('Error', err.message);
         }
@@ -17,7 +18,7 @@ const LoginScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Login</Text>
+            <Text style={styles.title}>Register</Text>
 
             <TextInput
                 style={styles.input}
@@ -34,10 +35,10 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
             />
 
-            <Button title="Login" onPress={handleLogin} />
+            <Button title="Register" onPress={handleRegister} />
 
-            <Text style={styles.link} onPress={() => navigation.navigate('Register')}>
-                No account? Register here!
+            <Text style={styles.link} onPress={() => navigation.goBack()}>
+                Already have an account? Login here!
             </Text>
         </View>
     );
@@ -50,4 +51,4 @@ const styles = StyleSheet.create({
     link: { marginTop: 10, color: 'blue', textAlign: 'center' },
 });
 
-export default LoginScreen;
+export default RegisterScreen;
