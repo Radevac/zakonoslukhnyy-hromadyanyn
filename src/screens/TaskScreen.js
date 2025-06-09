@@ -51,7 +51,7 @@ const TaskScreen = () => {
 
             <Button
                 title="Add Violation"
-                onPress={() => navigation.navigate('TaskEditor', { date: date.toISOString() })}
+                onPress={() => navigation.navigate('TaskEditorScreen', { date: date.toISOString() })}
             />
         </View>
     );
