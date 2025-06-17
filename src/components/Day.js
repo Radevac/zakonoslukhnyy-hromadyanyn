@@ -21,11 +21,28 @@ const Day = ({ dayObj, onPress, isToday, hasTasks }) => {
 };
 
 const styles = StyleSheet.create({
-    dayContainer: { width: 42, height: 42, justifyContent: 'center', alignItems: 'center', borderRadius: 21 },
-    dayText: { color: '#ffffff' },
-    otherMonth: { opacity: 0.3 },
-    today: { borderWidth: 1, borderColor: '#ffffff', borderRadius: 21 },
-    dot: { fontSize: 10, color: '#00ff00' },
+    dayContainer: {
+        width: 42,
+        height: 42,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 21
+    },
+    dayText: {
+        color: '#ffffff'
+    },
+    otherMonth: {
+        opacity: 0.3
+    },
+    today: {
+        borderWidth: 1,
+        borderColor: '#ffffff',
+        borderRadius: 21
+    },
+    dot: {
+        fontSize: 10,
+        color: '#00ff00'
+    },
 });
 
 export default Day;

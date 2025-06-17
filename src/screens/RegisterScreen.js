@@ -12,7 +12,7 @@ const RegisterScreen = ({ navigation }) => {
             await register(username, password);
             navigation.goBack();
         } catch (err) {
-            Alert.alert('Error', err.message);
+            Alert.alert('Error', err.response?.data?.error || err.message);
         }
     };
 
@@ -45,10 +45,28 @@ const RegisterScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', padding: 20 },
-    input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 5, padding: 10, marginBottom: 10 },
-    title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
-    link: { marginTop: 10, color: 'blue', textAlign: 'center' },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: 20
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#aaa',
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 10
+    },
+    title: {
+        fontSize: 24,
+        marginBottom: 20,
+        textAlign: 'center'
+    },
+    link: {
+        marginTop: 10,
+        color: 'blue',
+        textAlign: 'center'
+    },
 });
 
 export default RegisterScreen;

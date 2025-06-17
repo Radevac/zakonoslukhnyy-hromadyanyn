@@ -113,11 +113,11 @@ const TaskEditorScreen = () => {
             name: 'violation.jpg',
             type: 'image/jpeg',
         });
-        formData.append('upload_preset', 'project_photo'); // заміни на свій upload_preset
+        formData.append('upload_preset', 'project_photo');
 
         try {
             const response = await fetch(
-                'https://api.cloudinary.com/v1_1/di7tdnp2a/image/upload', // заміни на свій cloud_name
+                'https://api.cloudinary.com/v1_1/di7tdnp2a/image/upload',
                 {
                     method: 'POST',
                     body: formData,
@@ -184,12 +184,39 @@ const TaskEditorScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-    label: { fontSize: 16, marginBottom: 5 },
-    input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 5, padding: 10, marginBottom: 10 },
-    picker: { borderWidth: 1, borderColor: '#aaa', borderRadius: 5, marginBottom: 10 },
-    image: { width: '100%', height: 200, marginVertical: 10, resizeMode: 'contain' },
-    noImage: { textAlign: 'center', marginVertical: 10, color: '#888' },
+    container: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: '#fff'
+    },
+    label: {
+        fontSize: 16,
+        marginBottom: 5
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#aaa',
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 10
+    },
+    picker: {
+        borderWidth: 1,
+        borderColor: '#aaa',
+        borderRadius: 5,
+        marginBottom: 10
+    },
+    image: {
+        width: '100%',
+        height: 200,
+        marginVertical: 10,
+        resizeMode: 'contain'
+    },
+    noImage: {
+        textAlign: 'center',
+        marginVertical: 10,
+        color: '#888'
+    },
 });
 
 export default TaskEditorScreen;

@@ -6,6 +6,7 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import TaskScreen from '../screens/TaskScreen';
 import TaskEditorScreen from '../screens/TaskEditorScreen';
+import ViolationMapScreen from '../screens/ViolationMapScreen';
 
 import DrawerNavigator from './DrawerNavigator';
 
@@ -19,8 +20,9 @@ const RootNavigator = () => {
             {user ? (
                 <>
                     <Stack.Screen name="Main" component={DrawerNavigator} />
-                    <Stack.Screen name="TaskScreen" component={TaskScreen} />
+                    <Stack.Screen name="TaskScreen" component={TaskScreen}  options={{ headerShown: true }}/>
                     <Stack.Screen name="TaskEditorScreen" component={TaskEditorScreen} />
+                    <Stack.Screen name="ViolationMap" component={ViolationMapScreen} />
                 </>
             ) : (
                 <>

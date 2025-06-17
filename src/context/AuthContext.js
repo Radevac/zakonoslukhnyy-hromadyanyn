@@ -1,58 +1,49 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+
+const API_URL = 'http://192.168.0.105:3000';
 
 const AuthContext = createContext();
-
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [token, setToken] = useState(null);
+
+    const saveToken = async (t) => {
+        await AsyncStorage.setItem('@token', t);
+        setToken(t);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${t}`;
+    };
 
     const register = async (username, password) => {
-        const usersRaw = await AsyncStorage.getItem('@users');
-        const users = usersRaw ? JSON.parse(usersRaw) : {};
-
-        if (users[username]) {
-            throw new Error('User already exists');
-        }
-
-        const newUser = { id: uuidv4(), password };
-        users[username] = newUser;
-
-        await AsyncStorage.setItem('@users', JSON.stringify(users));
-        await AsyncStorage.setItem('@currentUser', JSON.stringify({ username, id: newUser.id }));
-        setUser({ username, id: newUser.id });
+        await axios.post(`${API_URL}/auth/register`, { username, password });
+        await login(username, password);
     };
 
     const login = async (username, password) => {
-        const usersRaw = await AsyncStorage.getItem('@users');
-        const users = usersRaw ? JSON.parse(usersRaw) : {};
-
-        const existing = users[username];
-        if (!existing || existing.password !== password) {
-            throw new Error('Invalid username or password');
-        }
-
-        await AsyncStorage.setItem('@currentUser', JSON.stringify({ username, id: existing.id }));
-        setUser({ username, id: existing.id });
+        const res = await axios.post(`${API_URL}/auth/login`, { username, password });
+        await saveToken(res.data.token);
+        setUser({ username });
     };
 
     const logout = async () => {
-        await AsyncStorage.removeItem('@currentUser');
+        await AsyncStorage.removeItem('@token');
         setUser(null);
+        setToken(null);
+        delete axios.defaults.headers.common['Authorization'];
     };
 
-    const loadCurrentUser = async () => {
-        const current = await AsyncStorage.getItem('@currentUser');
-        if (current) {
-            setUser(JSON.parse(current));
+    const loadToken = async () => {
+        const savedToken = await AsyncStorage.getItem('@token');
+        if (savedToken) {
+            await saveToken(savedToken);
         }
     };
 
     useEffect(() => {
-        loadCurrentUser();
+        loadToken();
     }, []);
 
     return (

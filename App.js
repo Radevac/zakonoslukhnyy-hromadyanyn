@@ -5,6 +5,7 @@ import { TasksProvider } from './src/context/TasksContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import { initDB } from './src/database/database';
+import './src/i18n';
 
 export default function App() {
     useEffect(() => {

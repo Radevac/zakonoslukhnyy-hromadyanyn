@@ -44,10 +44,28 @@ const LoginScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, justifyContent: 'center', padding: 20 },
-    input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 5, padding: 10, marginBottom: 10 },
-    title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
-    link: { marginTop: 10, color: 'blue', textAlign: 'center' },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: 20
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#aaa',
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 10
+    },
+    title: {
+        fontSize: 24,
+        marginBottom: 20,
+        textAlign: 'center'
+    },
+    link: {
+        marginTop: 10,
+        color: 'blue',
+        textAlign: 'center'
+    },
 });
 
 export default LoginScreen;

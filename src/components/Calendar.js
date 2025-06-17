@@ -78,15 +78,50 @@ const Calendar = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#121212', padding: 16 },
-    clockContainer: { alignItems: 'flex-start', marginBottom: 10, paddingLeft: 10 },
-    clockText: { fontSize: 42, fontWeight: 'bold', color: '#ffffff' },
-    dateText: { fontSize: 18, color: '#cccccc' },
-    weekDaysRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 6 },
-    weekDay: { color: '#aaaaaa', fontSize: 16, fontWeight: 'bold', width: 42, textAlign: 'center' },
-    grid: { marginTop: 8 },
-    row: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 6 },
-    divider: { height: 1, backgroundColor: '#555', marginVertical: 8 },
+    container: {
+        flex: 1,
+        backgroundColor: '#121212',
+        padding: 16
+    },
+    clockContainer: {
+        alignItems: 'flex-start',
+        marginBottom: 10,
+        paddingLeft: 10
+    },
+    clockText: {
+        fontSize: 42,
+        fontWeight: 'bold',
+        color: '#ffffff'
+    },
+    dateText: {
+        fontSize: 18,
+        color: '#cccccc'
+    },
+    weekDaysRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 6
+    },
+    weekDay: {
+        color: '#aaaaaa',
+        fontSize: 16,
+        fontWeight: 'bold',
+        width: 42,
+        textAlign: 'center'
+    },
+    grid: {
+        marginTop: 8
+    },
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 6
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#555',
+        marginVertical: 8
+    },
 });
 
 export default Calendar;

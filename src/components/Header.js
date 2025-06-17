@@ -19,9 +19,23 @@ const Header = ({ date, onPrev, onNext }) => {
 };
 
 const styles = StyleSheet.create({
-    headerContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-    headerText: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
-    arrow: { color: '#ffffff', fontSize: 18, fontWeight: 'bold', paddingHorizontal: 10 },
+    headerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10
+    },
+    headerText: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: 'bold'
+    },
+    arrow: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: 'bold',
+        paddingHorizontal: 10
+    },
 });
 
 export default Header;
