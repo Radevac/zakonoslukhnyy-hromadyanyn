@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    Button,
+    StyleSheet,
+    Alert,
+    TouchableOpacity
+} from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
-const LoginScreen = ({ navigation }) => {
-    const { login } = useAuth();
+const LoginScreen = () => {
+    const navigation = useNavigation();
+    const { login, loginAsGuest } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
@@ -11,7 +21,8 @@ const LoginScreen = ({ navigation }) => {
         try {
             await login(username, password);
         } catch (err) {
-            Alert.alert('Error', err.message);
+            console.error(err);
+            Alert.alert('Error', 'Login failed');
         }
     };
 
@@ -25,7 +36,6 @@ const LoginScreen = ({ navigation }) => {
                 value={username}
                 onChangeText={setUsername}
             />
-
             <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -36,9 +46,12 @@ const LoginScreen = ({ navigation }) => {
 
             <Button title="Login" onPress={handleLogin} />
 
-            <Text style={styles.link} onPress={() => navigation.navigate('Register')}>
-                No account? Register here!
-            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.link}>No account? Register here!</Text>
+            </TouchableOpacity>
+
+            <View style={{ marginVertical: 10 }} />
+            <Button title="Увійти як гість" onPress={loginAsGuest} color="#888" />
         </View>
     );
 };
@@ -46,25 +59,27 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        padding: 20,
         justifyContent: 'center',
-        padding: 20
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#aaa',
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 10
+        backgroundColor: '#fff',
     },
     title: {
         fontSize: 24,
         marginBottom: 20,
-        textAlign: 'center'
+        textAlign: 'center',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: 10,
+        marginBottom: 10,
+        borderRadius: 5,
     },
     link: {
         marginTop: 10,
         color: 'blue',
-        textAlign: 'center'
+        textAlign: 'center',
+        textDecorationLine: 'underline',
     },
 });
 

@@ -58,7 +58,6 @@ const TaskScreen = () => {
                 />
             )}
 
-            {/* Кнопка для додавання порушення */}
             <Button
                 title="Add Violation"
                 onPress={() => navigation.navigate('TaskEditorScreen', { date: date.toISOString() })}

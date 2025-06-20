@@ -35,6 +35,11 @@ export const AuthProvider = ({ children }) => {
         delete axios.defaults.headers.common['Authorization'];
     };
 
+    const loginAsGuest = () => {
+        setUser({ guest: true });
+        setToken(null);
+    };
+
     const loadToken = async () => {
         const savedToken = await AsyncStorage.getItem('@token');
         if (savedToken) {
@@ -47,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, register, login, logout }}>
+        <AuthContext.Provider value={{ user, register, login, logout, loginAsGuest }}>
             {children}
         </AuthContext.Provider>
     );

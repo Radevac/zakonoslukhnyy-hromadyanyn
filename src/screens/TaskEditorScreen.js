@@ -1,10 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Image, Alert, Linking } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    TextInput,
+    Button,
+    StyleSheet,
+    Image,
+    Alert,
+    Linking
+} from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useTasks } from '../context/TasksContext';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const TaskEditorScreen = () => {
     const route = useRoute();
@@ -13,62 +24,53 @@ const TaskEditorScreen = () => {
     const { date: dateString, task } = route.params || {};
     const date = new Date(dateString);
 
-    const [description, setDescription] = useState(task ? task.description : '');
-    const [category, setCategory] = useState(task ? task.category : '');
-    const [geoLocation, setGeoLocation] = useState(task ? task.geoLocation : '');
-    const [photoUrl, setPhotoUrl] = useState(task ? task.photoUrl : '');
+    const [description, setDescription] = useState(task?.description || '');
+    const [category, setCategory] = useState(task?.category || '');
+    const [geoLocation, setGeoLocation] = useState(task?.geoLocation || '');
+    const [photoUrl, setPhotoUrl] = useState(task?.photoUrl || '');
+    const [localImage, setLocalImage] = useState(null);
 
-    useEffect(() => {
-        const getLocation = async () => {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                console.log('Permission to access location was denied');
-                return;
+    const requestMediaLibraryPermission = async () => {
+        const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            const { status: newStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (newStatus !== 'granted') {
+                Alert.alert(
+                    'Permission required',
+                    'Sorry, we need camera roll permissions to make this work! You can enable it in Settings.',
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                    ]
+                );
+                return false;
             }
-            const currentLocation = await Location.getCurrentPositionAsync({});
-            const coords = `${currentLocation.coords.latitude}, ${currentLocation.coords.longitude}`;
-            setGeoLocation(coords);
-        };
-
-        getLocation();
-    }, []);
-
-    const handleSave = async () => {
-        if (!description.trim()) {
-            Alert.alert('Error', 'Please enter a description!');
-            return;
         }
+        return true;
+    };
 
-        const violationData = {
-            description: description.trim(),
-            category: category.trim(),
-            geoLocation: geoLocation.trim(),
-            photoUrl: photoUrl || '',
-        };
-
-        if (task) {
-            await editTask(task.id, violationData, date);
-        } else {
-            await addTask(date, violationData);
+    const requestCameraPermission = async () => {
+        const { status } = await ImagePicker.getCameraPermissionsAsync();
+        if (status !== 'granted') {
+            const { status: newStatus } = await ImagePicker.requestCameraPermissionsAsync();
+            if (newStatus !== 'granted') {
+                Alert.alert(
+                    'Permission required',
+                    'Sorry, we need camera permissions to make this work! You can enable it in Settings.',
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                    ]
+                );
+                return false;
+            }
         }
-
-        Alert.alert('Success', 'Violation saved successfully!');
-        navigation.goBack();
+        return true;
     };
 
     const handlePickImage = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert(
-                'Permission required',
-                'We need gallery permissions to pick an image!',
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Open Settings', onPress: () => Linking.openSettings() },
-                ]
-            );
-            return;
-        }
+        const hasPermission = await requestMediaLibraryPermission();
+        if (!hasPermission) return;
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: 'Images',
@@ -77,23 +79,13 @@ const TaskEditorScreen = () => {
         });
 
         if (!result.canceled) {
-            await uploadToCloudinary(result.assets[0].uri);
+            setLocalImage(result.assets[0].uri);
         }
     };
 
     const handleTakePhoto = async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert(
-                'Permission required',
-                'We need camera permissions!',
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Open Settings', onPress: () => Linking.openSettings() },
-                ]
-            );
-            return;
-        }
+        const hasPermission = await requestCameraPermission();
+        if (!hasPermission) return;
 
         const result = await ImagePicker.launchCameraAsync({
             mediaTypes: 'Images',
@@ -102,7 +94,7 @@ const TaskEditorScreen = () => {
         });
 
         if (!result.canceled) {
-            await uploadToCloudinary(result.assets[0].uri);
+            setLocalImage(result.assets[0].uri);
         }
     };
 
@@ -116,27 +108,97 @@ const TaskEditorScreen = () => {
         formData.append('upload_preset', 'project_photo');
 
         try {
-            const response = await fetch(
-                'https://api.cloudinary.com/v1_1/di7tdnp2a/image/upload',
-                {
-                    method: 'POST',
-                    body: formData,
-                }
-            );
+            const res = await fetch('https://api.cloudinary.com/v1_1/di7tdnp2a/image/upload', {
+                method: 'POST',
+                body: formData,
+            });
 
-            const data = await response.json();
+            const data = await res.json();
             if (data.secure_url) {
-                console.log('Uploaded Image URL:', data.secure_url);
-                setPhotoUrl(data.secure_url);
-                Alert.alert('Upload successful!', 'Image uploaded to Cloudinary.');
+                return data.secure_url;
             } else {
-                console.error(data);
-                Alert.alert('Upload failed', 'Something went wrong.');
+                Alert.alert('Cloudinary error', 'Upload failed.');
+                return null;
             }
-        } catch (error) {
-            console.error('Upload error:', error);
-            Alert.alert('Upload error', error.message);
+        } catch (err) {
+            Alert.alert('Upload error', err.message);
+            return null;
         }
+    };
+
+    const sendPostToBackend = async (photo, coords) => {
+        try {
+            const token = await AsyncStorage.getItem('@token');
+            if (!token) {
+                Alert.alert('Error', 'You are not logged in');
+                return;
+            }
+
+            const [lat, lon] = coords.split(',').map(Number);
+
+            await axios.post('http://192.168.0.105:3000/posts', {
+                title: description,
+                text: category,
+                image: photo,
+                latitude: lat,
+                longitude: lon
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+        } catch (err) {
+            console.error(err);
+            Alert.alert('Error', 'Could not create post');
+        }
+    };
+
+    const handleSave = async () => {
+        if (!description.trim()) {
+            Alert.alert('Error', 'Please enter a description!');
+            return;
+        }
+
+        let coords = geoLocation;
+
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission denied', 'Location access is needed');
+                return;
+            }
+            const currentLocation = await Location.getCurrentPositionAsync({});
+            coords = `${currentLocation.coords.latitude},${currentLocation.coords.longitude}`;
+            setGeoLocation(coords);
+        } catch (e) {
+            Alert.alert('Location error', 'Could not get current location');
+            return;
+        }
+
+        let finalPhotoUrl = photoUrl;
+        if (localImage) {
+            const uploaded = await uploadToCloudinary(localImage);
+            if (!uploaded) return;
+            finalPhotoUrl = uploaded;
+            setPhotoUrl(uploaded);
+        }
+
+        const violationData = {
+            description: description.trim(),
+            category: category.trim(),
+            geoLocation: coords.trim(),
+            photoUrl: finalPhotoUrl || '',
+        };
+
+        if (task) {
+            await editTask(task.id, violationData, date);
+        } else {
+            await addTask(date, violationData);
+        }
+
+        await sendPostToBackend(finalPhotoUrl, coords);
+
+        Alert.alert('Success', 'Violation saved successfully!');
+        navigation.goBack();
     };
 
     return (
@@ -170,10 +232,13 @@ const TaskEditorScreen = () => {
                 placeholder="GeoLocation"
             />
 
-            {photoUrl ? (
-                <Image source={{ uri: photoUrl }} style={styles.image} />
+            {localImage || photoUrl ? (
+                <Image
+                    source={{ uri: localImage || photoUrl }}
+                    style={styles.image}
+                />
             ) : (
-                <Text style={styles.noImage}>No photo attached</Text>
+                <Text style={styles.noImage}>No photo selected</Text>
             )}
 
             <Button title="Pick from Gallery" onPress={handlePickImage} />
