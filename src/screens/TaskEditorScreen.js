@@ -7,7 +7,8 @@ import {
     StyleSheet,
     Image,
     Alert,
-    Linking
+    Linking,
+    useColorScheme
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useTasks } from '../context/TasksContext';
@@ -16,6 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { useTheme } from '../context/ThemeContext';
 
 const TaskEditorScreen = () => {
     const route = useRoute();
@@ -23,6 +25,7 @@ const TaskEditorScreen = () => {
     const { addTask, editTask } = useTasks();
     const { date: dateString, task } = route.params || {};
     const date = new Date(dateString);
+    const { theme, isDark } = useTheme();
 
     const [description, setDescription] = useState(task?.description || '');
     const [category, setCategory] = useState(task?.category || '');
@@ -30,38 +33,15 @@ const TaskEditorScreen = () => {
     const [photoUrl, setPhotoUrl] = useState(task?.photoUrl || '');
     const [localImage, setLocalImage] = useState(null);
 
-    const requestMediaLibraryPermission = async () => {
-        const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+    const requestPermission = async (permissionFunc, requestFunc, name) => {
+        const { status } = await permissionFunc();
         if (status !== 'granted') {
-            const { status: newStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            const { status: newStatus } = await requestFunc();
             if (newStatus !== 'granted') {
-                Alert.alert(
-                    'Permission required',
-                    'Sorry, we need camera roll permissions to make this work! You can enable it in Settings.',
-                    [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Open Settings', onPress: () => Linking.openSettings() },
-                    ]
-                );
-                return false;
-            }
-        }
-        return true;
-    };
-
-    const requestCameraPermission = async () => {
-        const { status } = await ImagePicker.getCameraPermissionsAsync();
-        if (status !== 'granted') {
-            const { status: newStatus } = await ImagePicker.requestCameraPermissionsAsync();
-            if (newStatus !== 'granted') {
-                Alert.alert(
-                    'Permission required',
-                    'Sorry, we need camera permissions to make this work! You can enable it in Settings.',
-                    [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Open Settings', onPress: () => Linking.openSettings() },
-                    ]
-                );
+                Alert.alert(`${name} Permission`, `Permission required to access ${name}.`, [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                ]);
                 return false;
             }
         }
@@ -69,7 +49,11 @@ const TaskEditorScreen = () => {
     };
 
     const handlePickImage = async () => {
-        const hasPermission = await requestMediaLibraryPermission();
+        const hasPermission = await requestPermission(
+            ImagePicker.getMediaLibraryPermissionsAsync,
+            ImagePicker.requestMediaLibraryPermissionsAsync,
+            'media library'
+        );
         if (!hasPermission) return;
 
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -84,7 +68,11 @@ const TaskEditorScreen = () => {
     };
 
     const handleTakePhoto = async () => {
-        const hasPermission = await requestCameraPermission();
+        const hasPermission = await requestPermission(
+            ImagePicker.getCameraPermissionsAsync,
+            ImagePicker.requestCameraPermissionsAsync,
+            'camera'
+        );
         if (!hasPermission) return;
 
         const result = await ImagePicker.launchCameraAsync({
@@ -114,12 +102,7 @@ const TaskEditorScreen = () => {
             });
 
             const data = await res.json();
-            if (data.secure_url) {
-                return data.secure_url;
-            } else {
-                Alert.alert('Cloudinary error', 'Upload failed.');
-                return null;
-            }
+            return data.secure_url || null;
         } catch (err) {
             Alert.alert('Upload error', err.message);
             return null;
@@ -145,7 +128,6 @@ const TaskEditorScreen = () => {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-
         } catch (err) {
             console.error(err);
             Alert.alert('Error', 'Could not create post');
@@ -201,22 +183,26 @@ const TaskEditorScreen = () => {
         navigation.goBack();
     };
 
+    const dynamicStyles = styles(isDark);
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>Violation for {date.toISOString().split('T')[0]}</Text>
+        <View style={dynamicStyles.container}>
+            <Text style={dynamicStyles.label}>Violation for {date.toISOString().split('T')[0]}</Text>
 
             <TextInput
-                style={styles.input}
+                style={dynamicStyles.input}
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Description"
+                placeholderTextColor={isDark ? '#aaa' : undefined}
             />
 
-            <Text style={styles.label}>Category</Text>
+            <Text style={dynamicStyles.label}>Category</Text>
             <Picker
                 selectedValue={category}
                 onValueChange={(itemValue) => setCategory(itemValue)}
-                style={styles.picker}
+                style={dynamicStyles.picker}
+                dropdownIconColor={isDark ? '#fff' : '#000'}
             >
                 <Picker.Item label="Select category..." value="" />
                 <Picker.Item label="Traffic Rules" value="traffic rules" />
@@ -226,19 +212,17 @@ const TaskEditorScreen = () => {
             </Picker>
 
             <TextInput
-                style={styles.input}
+                style={dynamicStyles.input}
                 value={geoLocation}
                 onChangeText={setGeoLocation}
                 placeholder="GeoLocation"
+                placeholderTextColor={isDark ? '#aaa' : undefined}
             />
 
             {localImage || photoUrl ? (
-                <Image
-                    source={{ uri: localImage || photoUrl }}
-                    style={styles.image}
-                />
+                <Image source={{ uri: localImage || photoUrl }} style={dynamicStyles.image} />
             ) : (
-                <Text style={styles.noImage}>No photo selected</Text>
+                <Text style={dynamicStyles.noImage}>No photo selected</Text>
             )}
 
             <Button title="Pick from Gallery" onPress={handlePickImage} />
@@ -248,40 +232,42 @@ const TaskEditorScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#fff'
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 5
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#aaa',
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 10
-    },
-    picker: {
-        borderWidth: 1,
-        borderColor: '#aaa',
-        borderRadius: 5,
-        marginBottom: 10
-    },
-    image: {
-        width: '100%',
-        height: 200,
-        marginVertical: 10,
-        resizeMode: 'contain'
-    },
-    noImage: {
-        textAlign: 'center',
-        marginVertical: 10,
-        color: '#888'
-    },
-});
+const styles = (isDark) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            padding: 20,
+            backgroundColor: isDark ? '#000' : '#fff',
+        },
+        label: {
+            fontSize: 16,
+            marginBottom: 5,
+            color: isDark ? '#fff' : '#000',
+        },
+        input: {
+            borderWidth: 1,
+            borderColor: '#aaa',
+            borderRadius: 5,
+            padding: 10,
+            marginBottom: 10,
+            color: isDark ? '#fff' : '#000',
+            backgroundColor: isDark ? '#222' : '#fff',
+        },
+        picker: {
+            marginBottom: 10,
+            color: isDark ? '#fff' : '#000',
+        },
+        image: {
+            width: '100%',
+            height: 200,
+            marginVertical: 10,
+            resizeMode: 'contain',
+        },
+        noImage: {
+            textAlign: 'center',
+            marginVertical: 10,
+            color: '#888',
+        },
+    });
 
 export default TaskEditorScreen;

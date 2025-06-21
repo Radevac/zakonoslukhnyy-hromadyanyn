@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Image, Alert, Linking } from 'react-native';
+import {
+    View, Text, TextInput, Button, StyleSheet, Image, Alert, Linking
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { useTasks } from '../context/TasksContext';
-import {Picker} from "@react-native-picker/picker";
+import { Picker } from "@react-native-picker/picker";
+import { useTheme } from '../context/ThemeContext';
 
 const ViolationScreen = () => {
     const navigation = useNavigation();
     const { addTask } = useTasks();
+    const { theme, isDark } = useTheme();
 
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
@@ -55,14 +59,11 @@ const ViolationScreen = () => {
             });
 
             const data = await res.json();
-            if (data.secure_url) {
-                return data.secure_url;
-            } else {
-                Alert.alert('Upload failed', 'No URL returned');
-                return null;
-            }
+            if (data.secure_url) return data.secure_url;
+
+            Alert.alert('Upload failed', 'No URL returned');
+            return null;
         } catch (err) {
-            console.error('Cloudinary error:', err);
             Alert.alert('Error uploading', err.message);
             return null;
         }
@@ -76,7 +77,6 @@ const ViolationScreen = () => {
 
         setUploading(true);
 
-        // 1. Get location
         let coords = geoLocation;
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
@@ -94,7 +94,6 @@ const ViolationScreen = () => {
             return;
         }
 
-        // 2. Upload photo
         let cloudUrl = '';
         if (localImage) {
             cloudUrl = await uploadToCloudinary(localImage);
@@ -104,7 +103,6 @@ const ViolationScreen = () => {
             }
         }
 
-        // 3. Save locally
         const violationData = {
             description: description.trim(),
             category: category.trim(),
@@ -114,7 +112,6 @@ const ViolationScreen = () => {
 
         await addTask(today, violationData);
 
-        // 4. Send to backend
         try {
             const token = await AsyncStorage.getItem('@token');
             const [lat, lon] = coords.split(',').map(Number);
@@ -134,29 +131,31 @@ const ViolationScreen = () => {
             Alert.alert('Success', 'Violation saved and sent.');
             navigation.goBack();
         } catch (e) {
-            console.error(e);
             Alert.alert('Backend error', 'Could not send post');
         }
 
         setUploading(false);
     };
 
+    const dynamicStyles = styles(isDark);
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>Violation (today only)</Text>
+        <View style={dynamicStyles.container}>
+            <Text style={dynamicStyles.label}>Violation (today only)</Text>
 
             <TextInput
-                style={styles.input}
+                style={dynamicStyles.input}
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Description"
+                placeholderTextColor={isDark ? '#aaa' : undefined}
             />
 
-            <Text style={styles.label}>Category</Text>
+            <Text style={dynamicStyles.label}>Category</Text>
             <Picker
                 selectedValue={category}
                 onValueChange={(itemValue) => setCategory(itemValue)}
-                style={styles.picker}
+                style={dynamicStyles.picker}
             >
                 <Picker.Item label="Select category..." value="" />
                 <Picker.Item label="Traffic Rules" value="traffic rules" />
@@ -166,13 +165,14 @@ const ViolationScreen = () => {
             </Picker>
 
             <TextInput
-                style={styles.input}
+                style={dynamicStyles.input}
                 value={geoLocation}
                 onChangeText={setGeoLocation}
                 placeholder="GeoLocation"
+                placeholderTextColor={isDark ? '#aaa' : undefined}
             />
 
-            {localImage && <Image source={{ uri: localImage }} style={styles.image} />}
+            {localImage && <Image source={{ uri: localImage }} style={dynamicStyles.image} />}
 
             <Button title="Take Photo" onPress={handleTakePhoto} />
             <Button title={uploading ? "Saving..." : "Save Violation"} onPress={handleSave} disabled={uploading} />
@@ -180,22 +180,33 @@ const ViolationScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const styles = (isDark) => StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#fff'
+        backgroundColor: isDark ? '#121212' : '#fff',
     },
     label: {
         fontSize: 16,
-        marginBottom: 5
+        marginBottom: 5,
+        color: isDark ? '#fff' : '#000',
     },
     input: {
         borderWidth: 1,
         borderColor: '#aaa',
         borderRadius: 5,
         padding: 10,
-        marginBottom: 10
+        marginBottom: 10,
+        color: isDark ? '#fff' : '#000',
+        backgroundColor: isDark ? '#1e1e1e' : '#fff',
+    },
+    picker: {
+        borderWidth: 1,
+        borderColor: '#aaa',
+        borderRadius: 5,
+        marginBottom: 10,
+        color: isDark ? '#fff' : '#000',
+        backgroundColor: isDark ? '#1e1e1e' : '#fff',
     },
     image: {
         width: '100%',
